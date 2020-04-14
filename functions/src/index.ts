@@ -14,14 +14,26 @@ const db = admin.firestore().collection('Threads')
 // });
 
 export const ViewThread = functions.region('europe-west2').https.onCall((data, context) => {
-    if (!context.auth) return { status: 'error', code: 401, message: 'Not signed in' }
-    
-    const id = 'www.theverge.com-2020-4-3-21206400-apple-tax-amazon-tv-prime-30-percent-developers'
-    const query = db.doc(id)
+    if (!context.auth) throw new functions.https.HttpsError('permission-denied', 'Not signed in')
+    const query = db.doc(data.threadId)
     return query.get().then((doc) => {
         if (doc.exists) {
             return doc.data()
         }
-        return { status: 'error', message: 'Document Not Found' }
+        throw new functions.https.HttpsError('not-found', 'Document Not Found')
     })
+})
+
+export const CreateThread = functions.region('europe-west2').https.onCall((data, context) => {
+    if (!context.auth) throw new functions.https.HttpsError('permission-denied', 'Not signed in')
+
+    console.log(data.article)
+    const id = data.article.url.split('www.')[1].split('/').join('-')
+
+    if (data.article) {
+        return db.doc(id).set(data.article).then((doc) => {
+            return data.article
+        })
+    }
+    throw new functions.https.HttpsError('invalid-argument', 'Invalid Article')
 })
