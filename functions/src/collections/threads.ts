@@ -6,6 +6,8 @@ const db = admin.firestore().collection('Threads')
 
 export const ViewThread = functions.region(region).https.onCall((body, event) => {
     if (!event.auth) throw new functions.https.HttpsError('permission-denied', 'Not signed in')
+    if (!body.threadId) throw new functions.https.HttpsError('invalid-argument', 'Invalid Thread ID')
+
     const query = db.doc(body.threadId)
     return query.get().then((doc) => {
         if (doc.exists) {
@@ -17,19 +19,15 @@ export const ViewThread = functions.region(region).https.onCall((body, event) =>
 
 export const CreateThread = functions.region(region).https.onCall((body, event) => {
     if (!event.auth) throw new functions.https.HttpsError('permission-denied', 'Not signed in')
+    if (!body.article) throw new functions.https.HttpsError('invalid-argument', 'Invalid Article')
 
-    console.log(body.article)
     const id = body.article.url.split('www.')[1].split('/').join('-')
     const thread = {
         ...body.article,
         id
     }
 
-    if (body.article) {
-        return db.doc(id).set(thread).then((doc) => {
-            return body.article
-        })
-    }
-
-    throw new functions.https.HttpsError('invalid-argument', 'Invalid Article')
+    return db.doc(id).set(thread).then((doc) => {
+        return body.article
+    })
 })

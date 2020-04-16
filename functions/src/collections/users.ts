@@ -5,12 +5,14 @@ import { region } from '../index'
 const db = admin.firestore().collection('Users')
 
 export const CreateUser = functions.region(region).https.onCall((body, event) => {
+    if (!body.credentials) throw new functions.https.HttpsError('invalid-argument', 'Invalid Credentials')
+
     return admin.auth().createUser({
         email: body.credentials.email,
         displayName: body.credentials.username,
         password: body.credentials.password
     }).then((x) => {
-        console.log(x)
+
         const user = {
             email: x.email,
             username: x.displayName,
@@ -30,8 +32,7 @@ export const CreateUser = functions.region(region).https.onCall((body, event) =>
 
 export const GetUser = functions.region(region).https.onCall((body, event) => {
     if (!event.auth) throw new functions.https.HttpsError('permission-denied', 'Not signed in')
-
-    console.log(body)
+    if (!body.email) throw new functions.https.HttpsError('invalid-argument', 'Invalid Email')
 
     return db.where('email', '==', body.email).get().then((doc) => {
         let user
