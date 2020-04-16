@@ -5,18 +5,13 @@ import { region } from '../index'
 
 const db = admin.firestore().collection('Comments')
 
-export const CreateComment = functions.region(region).https.onCall((data, context) => {
+export const CreateComment = functions.region(region).https.onCall((body, context) => {
     if (!context.auth) throw new functions.https.HttpsError('permission-denied', 'Not signed in')
-
-    if (!data.comment || data.parent ) throw new functions.https.HttpsError('invalid-argument', 'Invalid Article')
-    console.log(data.comment)
-    console.log(data.parent)
-
-    console.log(context.auth.token.email)
+    if (!body.comment || body.parent ) throw new functions.https.HttpsError('invalid-argument', 'Invalid Article')
 
     return db.add({
-        content: data.comment,
-        parent: data.parent,
+        content: body.comment,
+        parent: body.parent,
         user: context.auth.token.email,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         score: 0

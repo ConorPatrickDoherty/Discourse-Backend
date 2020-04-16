@@ -4,9 +4,9 @@ import { region } from '../index'
 
 const db = admin.firestore().collection('Threads')
 
-export const ViewThread = functions.region(region).https.onCall((data, context) => {
-    if (!context.auth) throw new functions.https.HttpsError('permission-denied', 'Not signed in')
-    const query = db.doc(data.threadId)
+export const ViewThread = functions.region(region).https.onCall((body, event) => {
+    if (!event.auth) throw new functions.https.HttpsError('permission-denied', 'Not signed in')
+    const query = db.doc(body.threadId)
     return query.get().then((doc) => {
         if (doc.exists) {
             return doc.data()
@@ -15,19 +15,19 @@ export const ViewThread = functions.region(region).https.onCall((data, context) 
     })
 })
 
-export const CreateThread = functions.region(region).https.onCall((data, context) => {
-    if (!context.auth) throw new functions.https.HttpsError('permission-denied', 'Not signed in')
+export const CreateThread = functions.region(region).https.onCall((body, event) => {
+    if (!event.auth) throw new functions.https.HttpsError('permission-denied', 'Not signed in')
 
-    console.log(data.article)
-    const id = data.article.url.split('www.')[1].split('/').join('-')
+    console.log(body.article)
+    const id = body.article.url.split('www.')[1].split('/').join('-')
     const thread = {
-        ...data.article,
+        ...body.article,
         id
     }
 
-    if (data.article) {
+    if (body.article) {
         return db.doc(id).set(thread).then((doc) => {
-            return data.article
+            return body.article
         })
     }
 
