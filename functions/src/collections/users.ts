@@ -1,6 +1,7 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import { region } from '../index'
+import { User } from '../interfaces/user';
 
 const db = admin.firestore().collection('Users')
 
@@ -8,19 +9,18 @@ export const CreateUser = functions.region(region).https.onCall((body, event) =>
     if (!body.credentials) throw new functions.https.HttpsError('invalid-argument', 'Invalid Credentials')
 
     return admin.auth().createUser({
-        email: body.credentials.email,
+        email: body.credentials.email.toLowerCase(),
         displayName: body.credentials.username,
         password: body.credentials.password
     }).then((x) => {
-
-        const user = {
-            email: x.email,
-            username: x.displayName,
+        const user: User = {
+            email: body.credentials.email.toLowerCase(),
+            username: body.credentials.username,
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
             score: 0
         }
+
         return db.doc(x.uid).set(user).then((doc) => {
-            console.log(user)
             return user
         }).catch((error) => {
             throw new functions.https.HttpsError('invalid-argument', error)

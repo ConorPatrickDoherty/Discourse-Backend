@@ -1,19 +1,44 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import { region } from '../index'
+import { Thread } from '../interfaces/thread';
 
-const db = admin.firestore().collection('Threads')
+const Threads = admin.firestore().collection('Threads')
+const Comments = admin.firestore().collection('Comments')
 
 export const ViewThread = functions.region(region).https.onCall((body, event) => {
     if (!event.auth) throw new functions.https.HttpsError('permission-denied', 'Not signed in')
     if (!body.threadId) throw new functions.https.HttpsError('invalid-argument', 'Invalid Thread ID')
 
-    const query = db.doc(body.threadId)
-    return query.get().then((doc) => {
+    //Get thread from database with top level comments
+    return Threads.doc(body.threadId).get().then((doc) => {
         if (doc.exists) {
-            return doc.data()
+            const comments:Comment[] = [];
+            return Comments.where('parentId', '==', body.threadId).get().then((commentList) => {
+                commentList.forEach((x) => {
+                    comments.push((x.data()) as Comment)
+                })
+
+                const newThread:Thread = {
+                    ...doc.data() as Thread,
+                    comments
+                }
+
+                return newThread
+            })
         }
-        throw new functions.https.HttpsError('not-found', 'Document Not Found')
+        //If thread does not exist, create a new one and return it
+        if (!body.article) throw new functions.https.HttpsError('invalid-argument', 'Invalid Article')
+        const id = body.article.url.split('www.')[1].split('/').join('-')
+        const thread:Thread = {
+            ...body.article,
+            id,
+            score: 0,
+            comments: []
+        }
+        return Threads.doc(id).set(thread).then(() => {
+            return body.article
+        })
     })
 })
 
@@ -22,12 +47,12 @@ export const CreateThread = functions.region(region).https.onCall((body, event) 
     if (!body.article) throw new functions.https.HttpsError('invalid-argument', 'Invalid Article')
 
     const id = body.article.url.split('www.')[1].split('/').join('-')
-    const thread = {
+    const thread:Thread = {
         ...body.article,
         id
     }
 
-    return db.doc(id).set(thread).then((doc) => {
+    return Threads.doc(id).set(thread).then(() => {
         return body.article
     })
 })
