@@ -2,6 +2,7 @@ import { User } from "./user";
 import * as firebase from 'firebase-admin';
 
 export interface Comment {
+    id: string,
     content: string,
     parentId: string,
     user: User,

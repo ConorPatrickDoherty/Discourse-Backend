@@ -2,6 +2,7 @@ import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import { region } from '../index'
 import { Thread } from '../interfaces/thread';
+import { Comment } from '../interfaces/comment'
 
 const Threads = admin.firestore().collection('Threads')
 const Comments = admin.firestore().collection('Comments')
@@ -14,9 +15,13 @@ export const ViewThread = functions.region(region).https.onCall((body, event) =>
     return Threads.doc(body.threadId).get().then((doc) => {
         if (doc.exists) {
             const comments:Comment[] = [];
-            return Comments.where('parentId', '==', body.threadId).get().then((commentList) => {
+            return Comments.where('parentId', '==', body.threadId).orderBy('createdAt', 'desc').get().then((commentList) => {
                 commentList.forEach((x) => {
-                    comments.push((x.data()) as Comment)
+                    const Comment:Comment = {
+                        id: x.id,
+                        ...x.data() as Comment
+                    }
+                    comments.push(Comment)
                 })
 
                 const newThread:Thread = {

@@ -1,4 +1,5 @@
 import * as firebase from 'firebase-admin';
+import { Comment } from '../interfaces/comment'
 
 export interface Thread {
     title: string,
