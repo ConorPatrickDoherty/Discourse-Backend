@@ -1,6 +1,6 @@
 export interface Vote {
-    parentId :string,
-    user: string,
+    parentId? :string,
+    user?: string,
     value: VoteValue
 }
 

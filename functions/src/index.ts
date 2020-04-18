@@ -24,5 +24,6 @@ export const {
 } = Users
 
 export const {
-    VoteForComment
+    VoteForComment,
+    GetVoteByParent
 } = Votes

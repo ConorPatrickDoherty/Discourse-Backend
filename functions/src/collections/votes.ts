@@ -22,7 +22,7 @@ export const VoteForComment = functions.region(region).https.onCall((body, conte
             let increment = body.voteValue;
             const oldVote = (x.docs[0].data() as Vote).value
             if (oldVote === 0) increment = increment
-            else if (oldVote !== body.voteValue) increment = increment + increment 
+            else if (oldVote !== increment) increment = increment + increment 
             else increment = increment *-1
                 
             console.log(increment)
@@ -39,6 +39,19 @@ export const VoteForComment = functions.region(region).https.onCall((body, conte
             value: body.voteValue
         } as Vote)
         .then(() => UpdateAllScores(email, body.commentId, body.voteValue))
+    })
+})
+
+export const GetVoteByParent = functions.region(region).https.onCall((body, context) => {
+    if (!context.auth) throw new functions.https.HttpsError('permission-denied', 'Not signed in')
+    if (!body.parentId) throw new functions.https.HttpsError('invalid-argument', 'Invalid Vote')
+
+    const email: string = context.auth.token.email;
+    return Votes.where('user', '==', email).where('parentId', '==', body.parentId).get().then((x) => {
+        if (x.size) {
+            return x.docs[0].data();
+        }
+        else return { value: 0 } as Vote;
     })
 })
 
