@@ -54,7 +54,7 @@ export const CreateThread = functions.region(region).https.onCall((body, event) 
     const thread:Thread = {
         ...body.article,
         id,
-        score: [{}],
+        score: 0,
         comments: [],
         replyCount: 0
     }

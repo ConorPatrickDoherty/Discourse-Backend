@@ -3,6 +3,7 @@ import * as admin from 'firebase-admin';
 import { region } from '../index'
 import { User } from '../interfaces/user';
 import { Comment } from '../interfaces/comment'
+import * as Queries from './shared-queries'
 
 const Threads = admin.firestore().collection('Threads')
 const Comments = admin.firestore().collection('Comments')
@@ -12,6 +13,8 @@ export const CreateComment = functions.region(region).https.onCall((body, contex
     if (!context.auth) throw new functions.https.HttpsError('permission-denied', 'Not signed in')
     if (!body.comment || !body.parentId || !body.rootId) throw new functions.https.HttpsError('invalid-argument', 'Invalid Comment')
 
+    console.log(body.parentId)
+    console.log(body.rootId)
     let user:User;
     return Users.where('email', '==', context.auth.token.email).get().then((doc) => {
         doc.forEach((x) => {
@@ -23,7 +26,7 @@ export const CreateComment = functions.region(region).https.onCall((body, contex
             parentId: body.parentId,
             user: user,
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
-            score: [{}],
+            score: 0,
             replyCount: 0
         } as Comment)
         .then(() => {
@@ -36,10 +39,10 @@ export const CreateComment = functions.region(region).https.onCall((body, contex
                         replyCount: admin.firestore.FieldValue.increment(1)
                     })
                     .then(() => {
-                        return getComments(body.parentId)
+                        return Queries.getComments(body.parentId)
                     })
                 }
-                return getComments(body.parentId)
+                return Queries.getComments(body.parentId)
             })
         })
     })
@@ -49,19 +52,6 @@ export const GetComments = functions.region(region).https.onCall((body, context)
     if (!context.auth) throw new functions.https.HttpsError('permission-denied', 'Not signed in')
     if (!body.parentId) throw new functions.https.HttpsError('invalid-argument', 'Invalid Comment')
 
-    return getComments(body.parentId)
+    return Queries.getComments(body.parentId)
 })
 
-const getComments = (parentId:string): Promise<Comment[]> => {
-    const comments:Comment[] = [];
-    return Comments.where('parentId', '==', parentId).orderBy('createdAt', 'desc').get()
-    .then((commentList) => {
-        commentList.forEach((x) => {
-            comments.push({
-                id: x.id,
-                ...x.data() as Comment
-            })
-        })
-        return comments;
-    })
-}
