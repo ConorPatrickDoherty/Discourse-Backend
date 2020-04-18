@@ -1,5 +1,6 @@
 import { User } from "./user";
 import * as firebase from 'firebase-admin';
+import { Vote } from "./vote";
 
 export interface Comment {
     id: string,
@@ -7,5 +8,6 @@ export interface Comment {
     parentId: string,
     user: User,
     createdAt: firebase.firestore.FieldValue,
-    score: number
+    score: Vote[],
+    replyCount: number
 }

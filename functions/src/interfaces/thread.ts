@@ -1,5 +1,6 @@
 import * as firebase from 'firebase-admin';
 import { Comment } from '../interfaces/comment'
+import { Vote } from './vote';
 
 export interface Thread {
     title: string,
@@ -16,5 +17,6 @@ export interface Thread {
     createdAt: firebase.firestore.FieldValue,
     id: string,
     comments?: Comment[],
-    score: number
+    score: Vote[],
+    replyCount: number
 }
