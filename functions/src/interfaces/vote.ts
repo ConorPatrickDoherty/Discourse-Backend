@@ -1,5 +1,5 @@
 export interface Vote {
-    id? :string,
+    parentId :string,
     user: string,
     value: number
 }
