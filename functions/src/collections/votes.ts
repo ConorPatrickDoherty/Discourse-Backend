@@ -9,7 +9,7 @@ const Comments = admin.firestore().collection('Comments')
 
 export const VoteForComment = functions.region(region).https.onCall((body, context) => {
     if (!context.auth) throw new functions.https.HttpsError('permission-denied', 'Not signed in')
-    if (body.commentId || !body.voteValue) throw new functions.https.HttpsError('invalid-argument', 'Invalid Vote')
+    if (!body.commentId || !body.voteValue) throw new functions.https.HttpsError('invalid-argument', 'Invalid Vote')
     if (!(body.voteValue === -1 || 0 || 1 )) throw new functions.https.HttpsError('invalid-argument', 'Invalid Vote Format (must be -1, 0 or 1)')
 
     const email: string = context.auth.token.email
@@ -17,11 +17,19 @@ export const VoteForComment = functions.region(region).https.onCall((body, conte
 
     //if User has previously voted, change the vote value and update the comments score
     return voteRef.get().then((x) => {
-        if (x.size) {   
+        //make sure the new vote value isn't the same as the old one
+        if (x.size) {
+            let increment = body.voteValue;
+            const oldVote = (x.docs[0].data() as Vote).value
+            if (oldVote === 0) increment = increment
+            else if (oldVote !== body.voteValue) increment = increment + increment 
+            else increment = increment *-1
+                
+            console.log(increment)
             return Votes.doc(x.docs[0].id).update({
-                value: body.voteValue
+                value: admin.firestore.FieldValue.increment(increment)
             })
-            .then(() => UpdateAllScores(email, x.docs[0].id, body.voteValue) )
+            .then(() => UpdateAllScores(email, body.commentId, increment) )
         }
 
         //if User hasn't previously voted, insert a new vote and update the comments score
@@ -30,16 +38,16 @@ export const VoteForComment = functions.region(region).https.onCall((body, conte
             user: email,
             value: body.voteValue
         } as Vote)
-        .then(() => UpdateAllScores(email, x.docs[0].id, body.voteValue))
+        .then(() => UpdateAllScores(email, body.commentId, body.voteValue))
     })
 })
 
-export const UpdateAllScores = (email:string, commentId:string, voteValue: number ): Promise<FirebaseFirestore.WriteResult> => {
+export const UpdateAllScores = (email:string, commentId:string, voteValue: number ): Promise<number> => {
     return Comments.doc(commentId).update({
         score: admin.firestore.FieldValue.increment(voteValue)
     })
     .then(() => Queries.updateUser(email, { 
             score: admin.firestore.FieldValue.increment(voteValue) 
-        })
+        }).then(() => Comments.doc(commentId).get().then((x) => (x.data() as Vote).value))
     )
 }
