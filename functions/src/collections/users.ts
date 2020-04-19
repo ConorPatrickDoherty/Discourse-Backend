@@ -17,7 +17,8 @@ export const CreateUser = functions.region(region).https.onCall((body, event) =>
             email: body.credentials.email.toLowerCase(),
             username: body.credentials.username,
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
-            score: 0
+            score: 0,
+            role: 'User'
         }
 
         return db.doc(x.uid).set(user).then((doc) => {

@@ -15,7 +15,9 @@ export const {
 
 export const {
     CreateComment,
-    GetComments
+    GetComments,
+    DeleteComment,
+    LockComment
 } = Comments
 
 export const {
