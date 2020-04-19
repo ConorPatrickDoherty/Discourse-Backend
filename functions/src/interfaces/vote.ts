@@ -4,4 +4,4 @@ export interface Vote {
     value: VoteValue
 }
 
-declare type VoteValue = -1 | 0 | 1
+export declare type VoteValue = -1 | 0 | 1

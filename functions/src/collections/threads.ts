@@ -36,7 +36,7 @@ export const ViewThread = functions.region(region).https.onCall((body, event) =>
         const thread:Thread = {
             ...body.article,
             id: body.threadId,
-            score: [{}],
+            score: 0,
             comments: [],
             replyCount: 0
         }
