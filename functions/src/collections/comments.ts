@@ -55,3 +55,20 @@ export const GetComments = functions.region(region).https.onCall((body, context)
     return Queries.getComments(body.parentId)
 })
 
+export const DeleteComments = functions.region(region).https.onCall((body, context) => {
+    if (!context.auth) throw new functions.https.HttpsError('permission-denied', 'Not signed in')
+    if (!body.commentId) throw new functions.https.HttpsError('invalid-argument', 'Invalid Comment ID')
+
+    const email: string = context.auth.token.email
+    const CommentRef = Comments.doc(body.commentId)
+
+    //If the vote is for a comment, update the comments score
+    return CommentRef.get().then((x) => {
+        if (x.exists && (x.data() as Comment).user.email === email) {
+            return CommentRef.update({
+                deleted: true
+            })
+        }
+        throw new functions.https.HttpsError('not-found', 'Comment with this ID not found')
+    })
+})

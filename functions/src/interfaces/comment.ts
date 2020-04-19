@@ -9,4 +9,5 @@ export interface Comment {
     createdAt: firebase.firestore.FieldValue,
     score: number,
     replyCount: number
+    deleted?:boolean
 }
