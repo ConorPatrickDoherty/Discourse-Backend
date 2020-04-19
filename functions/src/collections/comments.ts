@@ -66,8 +66,9 @@ export const DeleteComment = functions.region(region).https.onCall((body, contex
         if (x.exists && ( (x.data() as Comment).user.email === email || (x.data() as Comment).user.role === 'Admin') ) {
             return CommentRef.update({
                 deleted: true
-            }).then(() => Comments.where('parentId', '==', body.commentId).get()
-            .then(z => z.docs.map(xy => xy.data())))
+            }).then(() => {
+                return Queries.lockAllChildComments(body.commentId)
+            })
         }
         throw new functions.https.HttpsError('permission-denied', 'User does not have permission to delete this comment')
     })
@@ -85,26 +86,7 @@ export const LockComment = functions.region(region).https.onCall((body, context)
             return CommentRef.update({
                 locked: true
             }).then(() => {
-                //Update every descendand of the originally locked comment
-                let commentsList: string[] = []
-
-                return Comments.where('parentId', '==', body.commentId).get().then(async (y) => {
-                    commentsList = y.docs.map(c => c.id)
-                    for (let i = 0; i < commentsList.length; i++) {
-                        const id = commentsList[i];
-                        await Comments.doc(id).update({
-                            locked: true
-                        }).then(() => {
-                            return Comments.where('parentId', '==', id).get().then((childComments) => {
-                                return childComments.docs.map(cc => {
-                                    commentsList.push(cc.id)
-                                })
-                            })
-                        })
-                    }
-                    return commentsList;
-                }).then(() => Comments.where('parentId', '==', body.commentId).get()
-                    .then(z => z.docs.map(xy => xy.data())))
+                return Queries.lockAllChildComments(body.commentId)
             })
         }
         throw new functions.https.HttpsError('permission-denied', 'User does not have permission to delete this comment')

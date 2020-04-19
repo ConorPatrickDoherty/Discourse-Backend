@@ -10,7 +10,7 @@ export const updateUser = (email: string, updatedDoc: object) => {
     })
 }
 
-export const getComments = (parentId:string): Promise<Comment[]> => {
+export const getComments = (parentId: string): Promise<Comment[]> => {
     const comments:Comment[] = [];
     return Comments.where('parentId', '==', parentId).orderBy('createdAt', 'desc').get()
     .then((commentList) => {
@@ -22,4 +22,26 @@ export const getComments = (parentId:string): Promise<Comment[]> => {
         })
         return comments;
     })
+}
+
+export const lockAllChildComments = async (parentId: string): Promise<Comment[]> => {
+    let commentsList: string[] = []
+
+    return Comments.where('parentId', '==', parentId).get().then(async (y) => {
+        commentsList = y.docs.map(c => c.id)
+        for (let i = 0; i < commentsList.length; i++) {
+            const id = commentsList[i];
+            await Comments.doc(id).update({
+                locked: true
+            }).then(() => {
+                return Comments.where('parentId', '==', id).get().then((childComments) => {
+                    return childComments.docs.map(cc => {
+                        commentsList.push(cc.id)
+                    })
+                })
+            })
+        }
+        return commentsList;
+    }).then(() => Comments.where('parentId', '==', parentId).get()
+        .then(z => z.docs.map(xy => xy.data() as Comment)))
 }
