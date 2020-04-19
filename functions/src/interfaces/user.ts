@@ -4,5 +4,6 @@ export interface User {
     email: string,
     username: string,
     createdAt: firebase.firestore.FieldValue,
-    score: number
+    score: number,
+    role: string;
 }

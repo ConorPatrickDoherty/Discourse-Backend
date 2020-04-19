@@ -55,20 +55,36 @@ export const GetComments = functions.region(region).https.onCall((body, context)
     return Queries.getComments(body.parentId)
 })
 
-export const DeleteComments = functions.region(region).https.onCall((body, context) => {
+export const DeleteComment = functions.region(region).https.onCall((body, context) => {
     if (!context.auth) throw new functions.https.HttpsError('permission-denied', 'Not signed in')
     if (!body.commentId) throw new functions.https.HttpsError('invalid-argument', 'Invalid Comment ID')
 
     const email: string = context.auth.token.email
     const CommentRef = Comments.doc(body.commentId)
 
-    //If the vote is for a comment, update the comments score
     return CommentRef.get().then((x) => {
-        if (x.exists && (x.data() as Comment).user.email === email) {
+        if (x.exists && ( (x.data() as Comment).user.email === email || (x.data() as Comment).user.role === 'Admin') ) {
             return CommentRef.update({
                 deleted: true
             })
         }
-        throw new functions.https.HttpsError('not-found', 'Comment with this ID not found')
+        throw new functions.https.HttpsError('permission-denied', 'User does not have permission to delete this comment')
+    })
+})
+
+export const LockComment = functions.region(region).https.onCall((body, context) => {
+    if (!context.auth) throw new functions.https.HttpsError('permission-denied', 'Not signed in')
+    if (!body.commentId) throw new functions.https.HttpsError('invalid-argument', 'Invalid Comment ID')
+
+    const email: string = context.auth.token.email
+    const CommentRef = Comments.doc(body.commentId)
+
+    return CommentRef.get().then((x) => {
+        if (x.exists && ( (x.data() as Comment).user.email === email || (x.data() as Comment).user.role === 'Admin') ) {
+            return CommentRef.update({
+                locked: true
+            })
+        }
+        throw new functions.https.HttpsError('permission-denied', 'User does not have permission to delete this comment')
     })
 })
