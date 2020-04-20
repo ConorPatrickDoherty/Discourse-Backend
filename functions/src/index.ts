@@ -13,7 +13,8 @@ import * as Votes from './collections/votes'
 
 export const {
     CreateThread,
-    ViewThread
+    ViewThread,
+    GetThreads
 } = Threads
 
 export const {

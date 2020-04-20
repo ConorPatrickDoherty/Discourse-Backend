@@ -63,3 +63,16 @@ export const CreateThread = functions.region(region).https.onCall((body, event) 
         return body.article
     })
 })
+
+
+export const GetThreads = functions.region(region).https.onCall((body, event) => {
+    if (!event.auth) throw new functions.https.HttpsError('permission-denied', 'Not signed in')
+
+    return Threads.get().then(x => {
+        const threadList: Thread[] = []
+        x.docs.forEach(t => {
+            threadList.push(t.data() as Thread)
+        })
+        return threadList;
+    })
+})
