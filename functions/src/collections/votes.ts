@@ -3,6 +3,7 @@ import * as admin from 'firebase-admin';
 import { region } from '../index'
 import { Vote } from '../interfaces/vote';
 import * as Queries from './shared-queries'
+import { User } from '../interfaces/user';
 
 const Votes = admin.firestore().collection('Votes')
 const Comments = admin.firestore().collection('Comments')
@@ -56,7 +57,7 @@ export const GetVoteByParent = functions.region(region).https.onCall((body, cont
     })
 })
 
-export const UpdateAllScores = (email:string, parentId:string, voteValue: number ): Promise<admin.firestore.WriteResult> => {
+export const UpdateAllScores = (email:string, parentId:string, voteValue: number ): Promise<User> => {
     const CommentRef = Comments.doc(parentId)
 
     //If the vote is for a comment, update the comments score

@@ -2,6 +2,8 @@ import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import { region } from '../index'
 import { User } from '../interfaces/user';
+import { UploadImage } from './storage'
+import * as Queries from './shared-queries'
 
 const db = admin.firestore().collection('Users')
 
@@ -37,6 +39,24 @@ export const GetUser = functions.region(region).https.onCall((body, event) => {
 
     return db.where('email', '==', body.email.toLowerCase()).get().then((doc) => {
         console.log(doc.docs[0].data())
-        return doc.docs[0].data()
+        return doc.docs[0].data() as User
     })
+})
+
+export const UpdateProfile = functions.region(region).https.onCall((body, event) => {
+    if (!event.auth) throw new functions.https.HttpsError('permission-denied', 'Not signed in')
+    if (!body.bio && !body.username && !body.imageString) throw new functions.https.HttpsError('invalid-argument', 'Invalid Argument')
+
+    const updateObject:any = {}
+    if (body.bio) updateObject.bio = body.bio
+    if (body.username) updateObject.username = body.username
+
+    const email: string = event.auth.token.email;
+    if (body.imageString) {
+        return UploadImage(body.imageString, 'display-pictures', email).then((imageUrl) => {
+            if (imageUrl) updateObject.displayPicture = imageUrl;
+            return Queries.updateUser(email, updateObject)
+        })
+    }
+    return Queries.updateUser(email, updateObject);
 })

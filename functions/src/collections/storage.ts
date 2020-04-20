@@ -5,12 +5,13 @@ import { Bucket } from '@google-cloud/storage'
 
 const Storage: Bucket = admin.storage().bucket()
 
-const UploadImage = (fileAs64:string, destination:string, fileName: string):Promise<string> => {
+export const UploadImage = (fileAs64:string, destination:string, fileName: string):Promise<string> => {
     
-    let bufferStream = new stream.PassThrough();
-    bufferStream.end(new (Buffer.from(fileAs64.split('data:image/png;base64,')[1], 'base64') as any));
+    const bufferStream = new stream.PassThrough();
+    const base64String = fileAs64.split('base64,')[1]
+    bufferStream.end(Buffer.from(base64String, 'base64'));
 
-    let file = Storage.file(`${destination}/${fileName}`)
+    const file = Storage.file(`${destination}/${fileName}.jpeg`)
 
     return new Promise<string>((resolve, reject) => {
         bufferStream.pipe(file.createWriteStream({

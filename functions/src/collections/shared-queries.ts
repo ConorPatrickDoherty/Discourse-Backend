@@ -1,12 +1,16 @@
 import * as admin from 'firebase-admin';
 import { Comment } from '../interfaces/comment'
+import { User } from '../interfaces/user';
 
 const Users = admin.firestore().collection('Users')
 const Comments = admin.firestore().collection('Comments')
 
 export const updateUser = (email: string, updatedDoc: object) => {
     return Users.where('email', '==', email).get().then((x) => {
-        return Users.doc(x.docs[0].id).update(updatedDoc)
+        const userRef = Users.doc(x.docs[0].id)
+        return userRef.update(updatedDoc).then(() => {
+            return userRef.get().then(u => u.data() as User) 
+        })
     })
 }
 

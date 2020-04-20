@@ -25,7 +25,8 @@ export const {
 
 export const {
     CreateUser,
-    GetUser
+    GetUser,
+    UpdateProfile
 } = Users
 
 export const {
