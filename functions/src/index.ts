@@ -1,6 +1,9 @@
 import * as admin from 'firebase-admin';
 
-admin.initializeApp();
+admin.initializeApp({
+    storageBucket: "discourse-272015.appspot.com"
+});
+
 export const region = 'europe-west2'
 
 import * as Threads from './collections/threads'

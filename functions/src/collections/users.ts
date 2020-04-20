@@ -35,11 +35,8 @@ export const GetUser = functions.region(region).https.onCall((body, event) => {
     if (!event.auth) throw new functions.https.HttpsError('permission-denied', 'Not signed in')
     if (!body.email) throw new functions.https.HttpsError('invalid-argument', 'Invalid Email')
 
-    return db.where('email', '==', body.email).get().then((doc) => {
-        let user
-        doc.forEach((x) => {
-            user = x.data()
-        })
-        return user
+    return db.where('email', '==', body.email.toLowerCase()).get().then((doc) => {
+        console.log(doc.docs[0].data())
+        return doc.docs[0].data()
     })
 })

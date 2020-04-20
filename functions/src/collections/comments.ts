@@ -89,7 +89,7 @@ export const LockComment = functions.region(region).https.onCall((body, context)
                 return Queries.lockAllChildComments(body.commentId)
             })
         }
-        throw new functions.https.HttpsError('permission-denied', 'User does not have permission to delete this comment')
+        throw new functions.https.HttpsError('permission-denied', 'User does not have permission to lock this comment')
     })
 })
 
