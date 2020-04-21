@@ -3,7 +3,7 @@ import * as request from 'request'
 
 import { Region, NewsApiKey } from '../env'
 
-export const GetArticles = functions.runWith({memory: '1GB'}).region(Region).https.onCall(async (body, event) => {
+export const GetArticles = functions.region(Region).https.onCall(async (body, event) => {
     if (!event.auth) throw new functions.https.HttpsError('permission-denied', 'Not signed in')
     if (!body.category || !body.country) throw new functions.https.HttpsError('invalid-argument', 'Invalid api queries')
 
@@ -13,18 +13,15 @@ export const GetArticles = functions.runWith({memory: '1GB'}).region(Region).htt
 
 
     if (body.query) url = url.concat(`&q=${body.query.split('-').join('+')}`)
+    if (body.page) url = url.concat(`&page=${body.page}`)
 
     return new Promise((resolve, reject) => {
         request({
             url,
             method: 'GET',
             json: true
-        }, (err, res, bodyRes) => {
-            console.log(err)
-            console.log(res)
+        }, (err:any, res:any, bodyRes:any) => {
             resolve(bodyRes);
         })
-    }) 
-
-    
+    })
 })
