@@ -1,6 +1,6 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
-import { region } from '../index'
+import { Region } from '../env'
 import { User } from '../interfaces/user';
 import { UploadImage } from './storage'
 import * as Queries from './shared-queries'

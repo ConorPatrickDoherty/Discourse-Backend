@@ -4,8 +4,6 @@ admin.initializeApp({
     storageBucket: "discourse-272015.appspot.com"
 });
 
-export const region = 'europe-west2'
-
 import * as Threads from './collections/threads'
 import * as Comments from './collections/comments'
 import * as Users from './collections/users'

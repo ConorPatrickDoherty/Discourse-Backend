@@ -1,15 +1,12 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
-import { region } from '../index'
+import { Region } from '../env'
 import { Vote } from '../interfaces/vote';
 import * as Queries from './shared-queries'
-import { User } from '../interfaces/user';
 
 const Votes = admin.firestore().collection('Votes')
-const Comments = admin.firestore().collection('Comments')
-const Threads = admin.firestore().collection('Threads')
 
-export const VoteForItem = functions.region(region).https.onCall((body, context) => {
+export const VoteForItem = functions.region(Region).https.onCall((body, context) => {
     if (!context.auth) throw new functions.https.HttpsError('permission-denied', 'Not signed in')
     if (!body.parentId || !body.voteValue) throw new functions.https.HttpsError('invalid-argument', 'Invalid Vote')
     if (!(body.voteValue === -1 || 0 || 1 )) throw new functions.https.HttpsError('invalid-argument', 'Invalid Vote Format (must be -1, 0 or 1)')
@@ -31,7 +28,7 @@ export const VoteForItem = functions.region(region).https.onCall((body, context)
             return Votes.doc(x.docs[0].id).update({
                 value: admin.firestore.FieldValue.increment(increment)
             })
-            .then(() => UpdateAllScores(email, body.parentId, increment) )
+            .then(() => Queries.UpdateAllScores(email, body.parentId, increment) )
         }
 
         //if User hasn't previously voted, insert a new vote and update the comments score
@@ -40,11 +37,11 @@ export const VoteForItem = functions.region(region).https.onCall((body, context)
             user: email,
             value: body.voteValue
         } as Vote)
-        .then(() => UpdateAllScores(email, body.parentId, body.voteValue))
+        .then(() => Queries.UpdateAllScores(email, body.parentId, body.voteValue))
     })
 })
 
-export const GetVoteByParent = functions.region(region).https.onCall((body, context) => {
+export const GetVoteByParent = functions.region(Region).https.onCall((body, context) => {
     if (!context.auth) throw new functions.https.HttpsError('permission-denied', 'Not signed in')
     if (!body.parentId) throw new functions.https.HttpsError('invalid-argument', 'Invalid Vote')
 
@@ -57,27 +54,3 @@ export const GetVoteByParent = functions.region(region).https.onCall((body, cont
     })
 })
 
-export const UpdateAllScores = (email:string, parentId:string, voteValue: number ): Promise<User> => {
-    const CommentRef = Comments.doc(parentId)
-
-    //If the vote is for a comment, update the comments score
-    return CommentRef.get().then((x) => {
-        if (x.exists) {
-            return CommentRef.update({
-                score: admin.firestore.FieldValue.increment(voteValue)
-            })
-            .then(() => Queries.updateUser(email, { 
-                    score: admin.firestore.FieldValue.increment(voteValue) 
-                })
-            )
-        }
-        //If a comment cannot be found, update the score for a thread instead
-        return Threads.doc(parentId).update({
-            score: admin.firestore.FieldValue.increment(voteValue)
-        })
-        .then(() => Queries.updateUser(email, { 
-                score: admin.firestore.FieldValue.increment(voteValue) 
-            })
-        )
-    })
-}

@@ -1,13 +1,13 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
-import { region } from '../index'
+import { Region } from '../env'
 import { Thread } from '../interfaces/thread';
 import { Comment } from '../interfaces/comment'
 
 const Threads = admin.firestore().collection('Threads')
 const Comments = admin.firestore().collection('Comments')
 
-export const ViewThread = functions.region(region).https.onCall((body, event) => {
+export const ViewThread = functions.region(Region).https.onCall((body, event) => {
     if (!event.auth) throw new functions.https.HttpsError('permission-denied', 'Not signed in')
     if (!body.threadId) throw new functions.https.HttpsError('invalid-argument', 'Invalid Thread ID')
 
@@ -46,7 +46,7 @@ export const ViewThread = functions.region(region).https.onCall((body, event) =>
     })
 })
 
-export const CreateThread = functions.region(region).https.onCall((body, event) => {
+export const CreateThread = functions.region(Region).https.onCall((body, event) => {
     if (!event.auth) throw new functions.https.HttpsError('permission-denied', 'Not signed in')
     if (!body.article) throw new functions.https.HttpsError('invalid-argument', 'Invalid Article')
 
@@ -65,7 +65,7 @@ export const CreateThread = functions.region(region).https.onCall((body, event) 
 })
 
 
-export const GetThreads = functions.region(region).https.onCall(async (body, event) => {
+export const GetThreads = functions.region(Region).https.onCall(async (body, event) => {
     if (!event.auth) throw new functions.https.HttpsError('permission-denied', 'Not signed in')
     const index = body.index || false
 

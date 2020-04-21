@@ -1,6 +1,6 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
-import { region } from '../index'
+import { Region } from '../env'
 import { User } from '../interfaces/user';
 import { Comment } from '../interfaces/comment'
 import * as Queries from './shared-queries'
@@ -9,7 +9,7 @@ const Threads = admin.firestore().collection('Threads')
 const Comments = admin.firestore().collection('Comments')
 const Users = admin.firestore().collection('Users')
 
-export const CreateComment = functions.region(region).https.onCall((body, context) => {
+export const CreateComment = functions.region(Region).https.onCall((body, context) => {
     if (!context.auth) throw new functions.https.HttpsError('permission-denied', 'Not signed in')
     if (!body.comment || !body.parentId || !body.rootId) throw new functions.https.HttpsError('invalid-argument', 'Invalid Comment')
 
@@ -48,14 +48,14 @@ export const CreateComment = functions.region(region).https.onCall((body, contex
     })
 })
 
-export const GetComments = functions.region(region).https.onCall((body, context) => {
+export const GetComments = functions.region(Region).https.onCall((body, context) => {
     if (!context.auth) throw new functions.https.HttpsError('permission-denied', 'Not signed in')
     if (!body.parentId) throw new functions.https.HttpsError('invalid-argument', 'Invalid Comment')
 
     return Queries.getComments(body.parentId)
 })
 
-export const DeleteComment = functions.region(region).https.onCall((body, context) => {
+export const DeleteComment = functions.region(Region).https.onCall((body, context) => {
     if (!context.auth) throw new functions.https.HttpsError('permission-denied', 'Not signed in')
     if (!body.commentId) throw new functions.https.HttpsError('invalid-argument', 'Invalid Comment ID')
 
@@ -74,7 +74,7 @@ export const DeleteComment = functions.region(region).https.onCall((body, contex
     })
 })
 
-export const LockComment = functions.region(region).https.onCall((body, context) => {
+export const LockComment = functions.region(Region).https.onCall((body, context) => {
     if (!context.auth) throw new functions.https.HttpsError('permission-denied', 'Not signed in')
     if (!body.commentId) throw new functions.https.HttpsError('invalid-argument', 'Invalid Comment ID')
 

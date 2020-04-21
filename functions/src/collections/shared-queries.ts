@@ -4,6 +4,7 @@ import { User } from '../interfaces/user';
 
 const Users = admin.firestore().collection('Users')
 const Comments = admin.firestore().collection('Comments')
+const Threads = admin.firestore().collection('Threads')
 
 export const updateUser = (email: string, updatedDoc: object) => {
     return Users.where('email', '==', email).get().then((x) => {
@@ -48,4 +49,29 @@ export const lockAllChildComments = async (parentId: string): Promise<Comment[]>
         return commentsList;
     }).then(() => Comments.where('parentId', '==', parentId).get()
         .then(z => z.docs.map(xy => xy.data() as Comment)))
+}
+
+export const UpdateAllScores = (email:string, parentId:string, voteValue: number ): Promise<User> => {
+    const CommentRef = Comments.doc(parentId)
+
+    //If the vote is for a comment, update the comments score
+    return CommentRef.get().then((x) => {
+        if (x.exists) {
+            return CommentRef.update({
+                score: admin.firestore.FieldValue.increment(voteValue)
+            })
+            .then(() => updateUser(email, { 
+                    score: admin.firestore.FieldValue.increment(voteValue) 
+                })
+            )
+        }
+        //If a comment cannot be found, update the score for a thread instead
+        return Threads.doc(parentId).update({
+            score: admin.firestore.FieldValue.increment(voteValue)
+        })
+        .then(() => updateUser(email, { 
+                score: admin.firestore.FieldValue.increment(voteValue) 
+            })
+        )
+    })
 }
