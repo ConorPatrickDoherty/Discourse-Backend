@@ -7,7 +7,7 @@ import * as Queries from './shared-queries'
 
 const db = admin.firestore().collection('Users')
 
-export const CreateUser = functions.region(region).https.onCall((body, event) => {
+export const CreateUser = functions.region(Region).https.onCall((body, event) => {
     if (!body.credentials) throw new functions.https.HttpsError('invalid-argument', 'Invalid Credentials')
 
     return admin.auth().createUser({
@@ -33,7 +33,7 @@ export const CreateUser = functions.region(region).https.onCall((body, event) =>
     })
 });
 
-export const GetUser = functions.region(region).https.onCall((body, event) => {
+export const GetUser = functions.region(Region).https.onCall((body, event) => {
     if (!event.auth) throw new functions.https.HttpsError('permission-denied', 'Not signed in')
     if (!body.email) throw new functions.https.HttpsError('invalid-argument', 'Invalid Email')
 
@@ -43,7 +43,7 @@ export const GetUser = functions.region(region).https.onCall((body, event) => {
     })
 })
 
-export const UpdateProfile = functions.region(region).https.onCall((body, event) => {
+export const UpdateProfile = functions.region(Region).https.onCall((body, event) => {
     if (!event.auth) throw new functions.https.HttpsError('permission-denied', 'Not signed in')
     if (!body.bio && !body.username && !body.imageString) throw new functions.https.HttpsError('invalid-argument', 'Invalid Argument')
 

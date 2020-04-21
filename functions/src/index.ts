@@ -8,6 +8,7 @@ import * as Threads from './collections/threads'
 import * as Comments from './collections/comments'
 import * as Users from './collections/users'
 import * as Votes from './collections/votes'
+import * as NewsAPI from './collections/articles'
 
 export const {
     CreateThread,
@@ -32,3 +33,7 @@ export const {
     VoteForItem,
     GetVoteByParent
 } = Votes
+
+export const {
+    GetArticles
+}  = NewsAPI
