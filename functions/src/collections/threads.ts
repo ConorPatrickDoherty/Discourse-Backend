@@ -65,14 +65,32 @@ export const CreateThread = functions.region(region).https.onCall((body, event) 
 })
 
 
-export const GetThreads = functions.region(region).https.onCall((body, event) => {
+export const GetThreads = functions.region(region).https.onCall(async (body, event) => {
     if (!event.auth) throw new functions.https.HttpsError('permission-denied', 'Not signed in')
+    const index = body.index || false
 
-    return Threads.get().then(x => {
-        const threadList: Thread[] = []
-        x.docs.forEach(t => {
-            threadList.push(t.data() as Thread)
+    const ThreadRef = Threads.orderBy('replyCount', 'desc')
+
+    if (!index) {
+        return ThreadRef.limit(10).get().then(x => {
+            const threadList: Thread[] = []
+            x.docs.forEach(t => {
+                threadList.push(t.data() as Thread)
+            })
+            return threadList;
         })
-        return threadList;
+    }
+
+    return ThreadRef.limit(index).get().then((snap) => {
+        const startAtIndex = snap.docs[snap.docs.length - 1]
+
+
+        return ThreadRef.startAfter(startAtIndex).limit(10).get().then(x => {
+            const threadList: Thread[] = []
+            x.docs.forEach(t => {
+                threadList.push(t.data() as Thread)
+            })
+            return threadList;
+        })
     })
 })

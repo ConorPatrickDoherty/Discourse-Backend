@@ -92,4 +92,3 @@ export const LockComment = functions.region(region).https.onCall((body, context)
         throw new functions.https.HttpsError('permission-denied', 'User does not have permission to lock this comment')
     })
 })
-
