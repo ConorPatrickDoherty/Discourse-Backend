@@ -1,11 +1,10 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
+import * as Queries from './shared-queries'
 import { Region } from '../env'
 import { Thread } from '../interfaces/thread';
-import { Comment } from '../interfaces/comment'
 
 const Threads = admin.firestore().collection('Threads')
-const Comments = admin.firestore().collection('Comments')
 
 export const ViewThread = functions.region(Region).https.onCall((body, event) => {
     if (!event.auth) throw new functions.https.HttpsError('permission-denied', 'Not signed in')
@@ -14,15 +13,7 @@ export const ViewThread = functions.region(Region).https.onCall((body, event) =>
     //Get thread from database with top level comments
     return Threads.doc(body.threadId).get().then((doc) => {
         if (doc.exists) {
-            const comments:Comment[] = [];
-            return Comments.where('parentId', '==', body.threadId).orderBy('createdAt', 'desc').get().then((commentList) => {
-                commentList.forEach((x) => {
-                    comments.push({
-                        id: x.id,
-                        ...x.data() as Comment
-                    })
-                })
-
+            return Queries.getComments(body.threadId).then((comments) => {
                 const newThread:Thread = {
                     ...doc.data() as Thread,
                     comments

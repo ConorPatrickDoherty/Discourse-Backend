@@ -20,10 +20,13 @@ export const getComments = (parentId: string): Promise<Comment[]> => {
     return Comments.where('parentId', '==', parentId).orderBy('createdAt', 'desc').get()
     .then((commentList) => {
         commentList.forEach((x) => {
-            comments.push({
-                id: x.id,
-                ...x.data() as Comment
-            })
+            if (x.data().deleted) console.log('Removed deleted comment')
+            else {
+                comments.push({
+                    id: x.id,
+                    ...x.data() as Comment
+                })
+            }
         })
         return comments;
     })
