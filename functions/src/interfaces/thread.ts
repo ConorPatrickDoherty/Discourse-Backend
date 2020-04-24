@@ -12,7 +12,10 @@ export interface Thread {
     url: string,
     content: string,
     urlToImage: string,
-    publishedAt: string,
+    publishedAt: {
+        _seconds: number;
+        _nanoSeconds: number;
+    },
     createdAt: firebase.firestore.FieldValue,
     id: string,
     comments?: Comment[],

@@ -21,9 +21,15 @@ export const ViewThread = functions.region(Region).https.onCall((body, event) =>
 
                 return newThread
             })
-        }
+        }"2020-04-21T11:00:28Z"
+
         //If thread does not exist, create a new one and return it
         if (!body.article) throw new functions.https.HttpsError('invalid-argument', 'Invalid Article')
+        if (body.article.publishedAt) {
+            const parsedDate = body.article.publishedAt.split('T')[0].split('-');
+            body.article.publishedAt = admin.firestore.Timestamp.fromDate(new Date(parsedDate[0], parsedDate[1], parsedDate[2]));
+        }
+        
         const thread:Thread = {
             ...body.article,
             id: body.threadId,
@@ -40,6 +46,11 @@ export const ViewThread = functions.region(Region).https.onCall((body, event) =>
 export const CreateThread = functions.region(Region).https.onCall((body, event) => {
     if (!event.auth) throw new functions.https.HttpsError('permission-denied', 'Not signed in')
     if (!body.article) throw new functions.https.HttpsError('invalid-argument', 'Invalid Article')
+    
+    if (body.article.publishedAt) {
+        const parsedDate = body.article.publishedAt.split('T')[0].split('-');
+        body.article.publishedAt = admin.firestore.Timestamp.fromDate(new Date(parsedDate[0], parsedDate[1] - 1, parsedDate[2]));
+    }
 
     const id = body.article.url.split('www.')[1].split('/').join('-')
     const thread:Thread = {
@@ -58,30 +69,49 @@ export const CreateThread = functions.region(Region).https.onCall((body, event) 
 
 export const GetThreads = functions.region(Region).https.onCall(async (body, event) => {
     if (!event.auth) throw new functions.https.HttpsError('permission-denied', 'Not signed in')
-    const index = body.index || false
+    if (!body.sortField || !body.sortRange) throw new functions.https.HttpsError('invalid-argument', 'Missing sort parameters')
 
-    const ThreadRef = Threads.orderBy('replyCount', 'desc')
+    const index = body.index || false;
+    const today = new Date();
+
+    let endAtDate: any;
+    console.log(body.sortField)
+    let ThreadRef: FirebaseFirestore.Query = Threads.orderBy(body.sortField, 'desc')
+
+    if (body.sortRange === 'week') endAtDate = Math.ceil(new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7).getTime() / 1000);
+    if (body.sortRange === 'month') endAtDate = Math.ceil(new Date(today.getFullYear(), today.getMonth(), today.getDate() - 30).getTime() / 1000);
+    if (body.sortRange === 'all') endAtDate = false;
+    
+    console.log(endAtDate)
 
     if (!index) {
-        return ThreadRef.limit(10).get().then(x => {
-            const threadList: Thread[] = []
+        return ThreadRef.get().then(x => {
+            console.log('got list')
+            let threadList: Thread[] = []
+            
             x.docs.forEach(t => {
-                threadList.push(t.data() as Thread)
+                if ((t.data() as Thread).publishedAt._seconds > endAtDate) threadList.push(t.data() as Thread)
             })
-            return threadList;
+            
+            return threadList.slice(0, 10);
         })
     }
 
     return ThreadRef.limit(index).get().then((snap) => {
         const startAtIndex = snap.docs[snap.docs.length - 1]
 
+        return ThreadRef.startAfter(startAtIndex).get().then(x => {
+            let threadList: Thread[] = []
 
-        return ThreadRef.startAfter(startAtIndex).limit(10).get().then(x => {
-            const threadList: Thread[] = []
             x.docs.forEach(t => {
-                threadList.push(t.data() as Thread)
+                if ((t.data() as Thread).publishedAt._seconds > endAtDate) {
+                    threadList.push(t.data() as Thread)
+                } 
             })
-            return threadList;
+        
+            
+            
+            return threadList.slice(0, 10 );
         })
     })
 })
